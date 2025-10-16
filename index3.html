@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Power Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        body.dark-mode h1 {
+            color: #f1f5f9;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        body.dark-mode .subtitle {
+            color: #cbd5e1;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .weather-card {
+            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #fcd34d;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        body.dark-mode .weather-card {
+            background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+            border-color: #b45309;
+        }
+
+        .weather-icon {
+            font-size: 3rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .weather-info h3 {
+            font-size: 1.875rem;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        body.dark-mode .weather-info h3 {
+            color: #f1f5f9;
+        }
+
+        .weather-info p {
+            color: #475569;
+            font-size: 0.875rem;
+        }
+
+        body.dark-mode .weather-info p {
+            color: #cbd5e1;
+        }
+
+        .meter-container {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+        }
+
+        body.dark-mode .meter-container {
+            background: #1e293b;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .meter {
+            position: relative;
+            width: 250px;
+            height: 250px;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .meter-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .meter-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f97316;
+        }
+
+        .meter-value.inactive {
+            color: #9ca3af;
+        }
+
+        .meter-unit {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        body.dark-mode .meter-unit {
+            color: #9ca3af;
+        }
+
+        .meter-percent {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 0.25rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        body.dark-mode .stat-card {
+            border-color: #334155;
+        }
+
+        .stat-current {
+            background: linear-gradient(135deg, #fef3c7 0%, #fef08a 100%);
+            border-color: #fcd34d;
+        }
+
+        body.dark-mode .stat-current {
+            background: linear-gradient(135deg, #92400e 0%, #78350f 100%);
+        }
+
+        .stat-daily {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border-color: #86efac;
+        }
+
+        body.dark-mode .stat-daily {
+            background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+        }
+
+        .stat-peak {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-color: #93c5fd;
+        }
+
+        body.dark-mode .stat-peak {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        body.dark-mode .stat-label {
+            color: #cbd5e1;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        body.dark-mode .stat-value {
+            color: #f1f5f9;
+        }
+
+        .stat-subtext {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        body.dark-mode .stat-subtext {
+            color: #cbd5e1;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: #6b7280;
+        }
+
+        .status-dot.active {
+            background: #22c55e;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .controls-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-mode .controls-card {
+            background: #1e293b;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .time-display h3 {
+            font-size: 2rem;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        body.dark-mode .time-display h3 {
+            color: #f1f5f9;
+        }
+
+        .time-display p {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        body.dark-mode .time-display p {
+            color: #cbd5e1;
+        }
+
+        .play-pause-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .play-pause-btn.playing {
+            background: #f97316;
+            color: white;
+        }
+
+        .play-pause-btn.playing:hover {
+            background: #ea580c;
+        }
+
+        .play-pause-btn.paused {
+            background: #6b7280;
+            color: white;
+        }
+
+        .play-pause-btn.paused:hover {
+            background: #4b5563;
+        }
+
+        .hourly-section {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-mode .hourly-section {
+            background: #1e293b;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .hourly-section h3 {
+            color: #1e293b;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        body.dark-mode .hourly-section h3 {
+            color: #cbd5e1;
+        }
+
+        .hourly-scroll {
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .hourly-scroll::-webkit-scrollbar {
+            height: 0.5rem;
+        }
+
+        .hourly-scroll::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+
+        body.dark-mode .hourly-scroll::-webkit-scrollbar-track {
+            background: #334155;
+        }
+
+        .hourly-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 0.25rem;
+        }
+
+        body.dark-mode .hourly-scroll::-webkit-scrollbar-thumb {
+            background: #64748b;
+        }
+
+        .hourly-item {
+            flex-shrink: 0;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        body.dark-mode .hourly-item {
+            border-color: #334155;
+        }
+
+        .hourly-item:hover {
+            border-color: #fed7aa;
+            background: #fffbeb;
+        }
+
+        body.dark-mode .hourly-item:hover {
+            border-color: #f97316;
+            background: rgba(249, 115, 22, 0.1);
+        }
+
+        .hourly-item.active {
+            border-color: #f97316;
+            background: #fef3c7;
+        }
+
+        body.dark-mode .hourly-item.active {
+            background: rgba(249, 115, 22, 0.2);
+        }
+
+        .hourly-time {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        body.dark-mode .hourly-time {
+            color: #cbd5e1;
+        }
+
+        .hourly-power {
+            font-size: 0.875rem;
+            font-weight: bold;
+            margin-top: 0.25rem;
+            color: #f97316;
+        }
+
+        .hourly-power.inactive {
+            color: #9ca3af;
+        }
+
+        .hourly-weather {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-mode .status-card {
+            background: #1e293b;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .status-info h3 {
+            color: #1e293b;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        body.dark-mode .status-info h3 {
+            color: #f1f5f9;
+        }
+
+        .status-info p {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        body.dark-mode .status-info p {
+            color: #cbd5e1;
+        }
+
+        .daily-summary {
+            background: linear-gradient(135deg, #f3e8ff 0%, #f3e8ff 100%);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #e9d5ff;
+        }
+
+        body.dark-mode .daily-summary {
+            background: linear-gradient(135deg, #581c87 0%, #581c87 100%);
+            border-color: #7c3aed;
+        }
+
+        .daily-summary h3 {
+            color: #1e293b;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        body.dark-mode .daily-summary h3 {
+            color: #f1f5f9;
+        }
+
+        .daily-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .daily-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .daily-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        body.dark-mode .daily-label {
+            color: #cbd5e1;
+        }
+
+        .daily-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #7c3aed;
+        }
+
+        body.dark-mode .daily-value {
+            color: #c084fc;
+        }
+
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 1.875rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls-card {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .time-display h3 {
+                font-size: 1.5rem;
+            }
+
+            .play-pause-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .daily-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>☀️ Solar Power Monitor</h1>
+            <p class="subtitle">Real-time solar panel power generation</p>
+        </header>
+
+        <div class="content">
+            <!-- Weather Display -->
+            <div class="weather-card">
+                <div class="weather-icon" id="weatherIcon">☀️</div>
+                <div class="weather-info">
+                    <h3 id="weatherTime">7:00</h3>
+                    <p id="weatherCondition">Sunny</p>
+                </div>
+            </div>
+
+            <!-- Meter Display -->
+            <div class="meter-container">
+                <div class="meter">
+                    <svg viewBox="0 0 120 120">
+                        <defs>
+                            <linearGradient id="meterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#fbbf24" />
+                                <stop offset="100%" stop-color="#f97316" />
+                            </linearGradient>
+                        </defs>
+                        
+                        <!-- Background circle -->
+                        <circle cx="60" cy="60" r="45" fill="none" stroke="#e5e7eb" stroke-width="8" />
+                        
+                        <!-- Progress circle -->
+                        <circle
+                            cx="60"
+                            cy="60"
+                            r="45"
+                            fill="none"
+                            stroke="url(#meterGradient)"
+                            stroke-width="8"
+                            stroke-dasharray="282.7"
+                            stroke-dashoffset="282.7"
+                            stroke-linecap="round"
+                            id="meterCircle"
+                            transform="rotate(-90 60 60)"
+                            style="transition: stroke-dashoffset 0.3s ease;"
+                        />
+                        
+                        <!-- Center circle -->
+                        <circle cx="60" cy="60" r="30" fill="white" stroke="#e5e7eb" stroke-width="1" />
+                    </svg>
+                    
+                    <div class="meter-display">
+                        <div class="meter-value" id="meterValue">0</div>
+                        <div class="meter-unit">W</div>
+                        <div class="meter-percent" id="meterPercent">0.0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Power Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card stat-current">
+                    <div class="stat-label">⚡ Current</div>
+                    <div class="stat-value" id="currentPower">0W</div>
+                    <div class="stat-subtext"><span class="status-dot active" id="statusDot"></span> <span id="statusText">Idle</span></div>
+                </div>
+                
+                <div class="stat-card stat-daily">
+                    <div class="stat-label">🔋 Daily Total</div>
+                    <div class="stat-value" id="dailyTotal">0.00kWh</div>
+                    <div class="stat-subtext">Energy stored</div>
+                </div>
+                
+                <div class="stat-card stat-peak">
+                    <div class="stat-label">📈 Peak</div>
+                    <div class="stat-value" id="peakPower">0W</div>
+                    <div class="stat-subtext">Today's max</div>
+                </div>
+            </div>
+
+            <!-- Time Display and Controls -->
+            <div class="controls-card">
+                <div class="time-display">
+                    <h3 id="timeDisplay">07:00</h3>
+                    <p>Day <span id="dayCounter">1</span> • Current simulation time</p>
+                </div>
+                <button class="play-pause-btn playing" id="playPauseBtn">
+                    <span id="btnIcon">⏸️</span>
+                    <span id="btnText">Pause</span>
+                </button>
+            </div>
+
+            <!-- Hourly Slider -->
+            <div class="hourly-section">
+                <h3>Hourly Generation Report</h3>
+                <div class="hourly-scroll" id="hourlyScroll"></div>
+            </div>
+
+            <!-- Generation Status -->
+            <div class="status-card">
+                <div class="status-info">
+                    <h3>Generation Status</h3>
+                    <p id="statusMessage">Actively generating power. Weather: Sunny</p>
+                </div>
+                <div>
+                    <span class="status-dot active" id="statusIndicator"></span>
+                </div>
+            </div>
+
+            <!-- Daily Summary -->
+            <div class="daily-summary">
+                <h3>Daily Generation Summary</h3>
+                <div class="daily-grid">
+                    <div class="daily-item">
+                        <span class="daily-label">Total Generated Today</span>
+                        <span class="daily-value" id="dailySummaryTotal">0.00kWh</span>
+                    </div>
+                    <div class="daily-item">
+                        <span class="daily-label">Peak Power</span>
+                        <span class="daily-value" id="dailySummaryPeak">0W</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SolarMeter {
+            constructor() {
+                this.currentHour = 7;
+                this.currentMinute = 0;
+                this.currentPower = 0;
+                this.isPlaying = true;
+                this.dailyTotal = 0;
+                this.peakPower = 0;
+                this.dayCount = 1;
+                this.prevHour = 7;
+
+                // Hour data with max power and weather
+                this.hourlyData = [
+                    { hour: 0, maxPower: 0, weather: 'night' },
+                    { hour: 1, maxPower: 0, weather: 'night' },
+                    { hour: 2, maxPower: 0, weather: 'night' },
+                    { hour: 3, maxPower: 0, weather: 'night' },
+                    { hour: 4, maxPower: 0, weather: 'night' },
+                    { hour: 5, maxPower: 0, weather: 'night' },
+                    { hour: 6, maxPower: 50, weather: 'cloudy' },
+                    { hour: 7, maxPower: 200, weather: 'sunny' },
+                    { hour: 8, maxPower: 350, weather: 'sunny' },
+                    { hour: 9, maxPower: 450, weather: 'sunny' },
+                    { hour: 10, maxPower: 550, weather: 'sunny' },
+                    { hour: 11, maxPower: 600, weather: 'cloudy' },
+                    { hour: 12, maxPower: 650, weather: 'sunny' },
+                    { hour: 13, maxPower: 620, weather: 'sunny' },
+                    { hour: 14, maxPower: 580, weather: 'rainy' },
+                    { hour: 15, maxPower: 450, weather: 'rainy' },
+                    { hour: 16, maxPower: 350, weather: 'cloudy' },
+                    { hour: 17, maxPower: 250, weather: 'sunny' },
+                    { hour: 18, maxPower: 100, weather: 'sunny' },
+                    { hour: 19, maxPower: 0, weather: 'night' },
+                    { hour: 20, maxPower: 0, weather: 'night' },
+                    { hour: 21, maxPower: 0, weather: 'night' },
+                    { hour: 22, maxPower: 0, weather: 'night' },
+                    { hour: 23, maxPower: 0, weather: 'night' }
+                ];
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.generateHourlyItems();
+                this.startSimulation();
+                this.updateUI();
+            }
+
+            setupEventListeners() {
+                document.getElementById('playPauseBtn').addEventListener('click', () => {
+                    this.togglePlayPause();
+                });
+
+                document.querySelectorAll('.hourly-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const hour = parseInt(e.currentTarget.dataset.hour);
+                        this.selectHour(hour);
+                    });
+                });
+            }
+
+            generateHourlyItems() {
+                const container = document.getElementById('hourlyScroll');
+                container.innerHTML = '';
+
+                this.hourlyData.forEach(data => {
+                    const power = Math.floor(data.maxPower * (Math.random() * 0.7 + 0.3));
+                    const weatherIcon = this.getWeatherIcon(data.weather);
+                    
+                    const item = document.createElement('div');
+                    item.className = 'hourly-item';
+                    item.dataset.hour = data.hour;
+                    item.innerHTML = `
+                        <div class="hourly-time">${String(data.hour).padStart(2, '0')}:00</div>
+                        <div class="hourly-power ${power === 0 ? 'inactive' : ''}">${power}W</div>
+                        <div class="hourly-weather">${weatherIcon}</div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+
+            getWeatherIcon(weather) {
+                const icons = {
+                    'sunny': '☀️',
+                    'cloudy': '☁️',
+                    'rainy': '🌧️',
+                    'night': '🌙'
+                };
+                return icons[weather] || '☀️';
+            }
+
+            getWeatherIntensity(hour, minute) {
+                const nextHour = (hour + 1) % 24;
+                const currentHourData = this.hourlyData[hour];
+                const nextHourData = this.hourlyData[nextHour];
+
+                if (!currentHourData || !nextHourData) return 1;
+
+                const currentMax = currentHourData.maxPower;
+                const nextMax = nextHourData.maxPower;
+                const t = minute / 60;
+                const interpolatedMax = currentMax + (nextMax - currentMax) * t;
+
+                return Math.max(0, Math.min(1, interpolatedMax / 650));
+            }
+
+            getSmoothWeather(hour, minute) {
+                const intensity = this.getWeatherIntensity(hour, minute);
+
+                if (hour < 6 || hour >= 19) return 'night';
+                if (intensity < 0.1) return 'night';
+                if (intensity > 0.7) return 'sunny';
+                if (intensity > 0.4) return 'cloudy';
+                return 'rainy';
+            }
+
+            startSimulation() {
+                setInterval(() => {
+                    if (!this.isPlaying) return;
+
+                    this.currentMinute++;
+                    if (this.currentMinute >= 60) {
+                        this.currentMinute = 0;
+                        this.currentHour = (this.currentHour + 1) % 24;
+
+                        // Detect day transition
+                        if (this.currentHour === 0 && this.prevHour !== 0) {
+                            this.dayCount++;
+                            this.dailyTotal = 0;
+                            this.peakPower = 0;
+                            this.currentPower = 0;
+                        }
+                        this.prevHour = this.currentHour;
+                    }
+
+                    this.updatePowerGeneration();
+                    this.updateUI();
+                }, 500); // Advance 1 minute every 500ms
+            }
+
+            updatePowerGeneration() {
+                const maxGeneratable = this.hourlyData[this.currentHour].maxPower;
+                const isInGenerationWindow = this.currentHour >= 6 && this.currentHour <= 18 && maxGeneratable > 0;
+
+                if (isInGenerationWindow && this.isPlaying) {
+                    const weatherIntensity = this.getWeatherIntensity(this.currentHour, this.currentMinute);
+                    const weatherFactor = weatherIntensity;
+                    const baseIncrease = (maxGeneratable / 60) * weatherFactor;
+                    const randomVariation = Math.random() * (baseIncrease * 0.3);
+                    const increase = baseIncrease + randomVariation;
+
+                    this.currentPower = Math.min(this.currentPower + increase, maxGeneratable * weatherFactor);
+                    this.peakPower = Math.max(this.peakPower, this.currentPower);
+                    this.dailyTotal += increase;
+                } else if (!isInGenerationWindow) {
+                    this.currentPower = 0;
+                }
+            }
+
+            togglePlayPause() {
+                this.isPlaying = !this.isPlaying;
+                this.updateUI();
+            }
+
+            selectHour(hour) {
+                this.currentHour = hour;
+                this.currentMinute = 0;
+                this.currentPower = 0;
+                this.dailyTotal = 0;
+                this.peakPower = 0;
+                this.updateUI();
+            }
+
+            updateUI() {
+                // Update time display
+                document.getElementById('timeDisplay').textContent = 
+                    `${String(this.currentHour).padStart(2, '0')}:${String(this.currentMinute).padStart(2, '0')}`;
+                document.getElementById('dayCounter').textContent = this.dayCount;
+
+                // Update weather
+                const weather = this.getSmoothWeather(this.currentHour, this.currentMinute);
+                document.getElementById('weatherIcon').textContent = this.getWeatherIcon(weather);
+                document.getElementById('weatherTime').textContent = `${this.currentHour}:00`;
+                document.getElementById('weatherCondition').textContent = 
+                    weather.charAt(0).toUpperCase() + weather.slice(1);
+
+                // Update meter
+                const maxPower = this.hourlyData[this.currentHour].maxPower || 650;
+                const percentage = maxPower === 0 ? 0 : (this.currentPower / maxPower) * 100;
+                const circumference = 2 * Math.PI * 45;
+                const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+                document.getElementById('meterValue').textContent = Math.floor(this.currentPower);
+                document.getElementById('meterPercent').textContent = percentage.toFixed(1) + '%';
+                document.getElementById('meterCircle').style.strokeDashoffset = strokeDashoffset;
+
+                const isGenerating = this.hourlyData[this.currentHour].maxPower > 0 && this.currentPower > 0;
+                document.getElementById('meterValue').className = 
+                    'meter-value ' + (isGenerating ? '' : 'inactive');
+
+                // Update stats
+                document.getElementById('currentPower').textContent = Math.floor(this.currentPower) + 'W';
+                document.getElementById('dailyTotal').textContent = (this.dailyTotal / 1000).toFixed(2) + 'kWh';
+                document.getElementById('peakPower').textContent = Math.floor(this.peakPower) + 'W';
+
+                // Update status
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+                if (isGenerating) {
+                    statusDot.className = 'status-dot active';
+                    statusText.textContent = 'Generating';
+                } else {
+                    statusDot.className = 'status-dot';
+                    statusText.textContent = 'Idle';
+                }
+
+                // Update play/pause button
+                const btn = document.getElementById('playPauseBtn');
+                const btnIcon = document.getElementById('btnIcon');
+                const btnText = document.getElementById('btnText');
+                if (this.isPlaying) {
+                    btn.className = 'play-pause-btn playing';
+                    btnIcon.textContent = '⏸️';
+                    btnText.textContent = 'Pause';
+                } else {
+                    btn.className = 'play-pause-btn paused';
+                    btnIcon.textContent = '▶️';
+                    btnText.textContent = 'Play';
+                }
+
+                // Update hourly items
+                document.querySelectorAll('.hourly-item').forEach(item => {
+                    const hour = parseInt(item.dataset.hour);
+                    if (hour === this.currentHour) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+
+                // Update status message
+                document.getElementById('statusMessage').textContent = 
+                    isGenerating 
+                        ? `Actively generating power. Weather: ${weather.charAt(0).toUpperCase() + weather.slice(1)}`
+                        : `No generation. Weather: ${weather.charAt(0).toUpperCase() + weather.slice(1)}`;
+
+                // Update status indicator
+                const indicator = document.getElementById('statusIndicator');
+                if (isGenerating) {
+                    indicator.className = 'status-dot active';
+                } else {
+                    indicator.className = 'status-dot';
+                }
+
+                // Update daily summary
+                document.getElementById('dailySummaryTotal').textContent = (this.dailyTotal / 1000).toFixed(2) + 'kWh';
+                document.getElementById('dailySummaryPeak').textContent = Math.floor(this.peakPower) + 'W';
+            }
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            new SolarMeter();
+        });
+    </script>
+</body>
+</html>
